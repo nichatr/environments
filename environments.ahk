@@ -40,7 +40,7 @@ setupEnvironments()
 setupEnvironments() {
 
   ; for drop down list.
-  Applications := "Select application|URL|VSCode|Notepad++|Word|Excel|Folder|Text File|Pdf"
+  Applications := "Select application|URL|VSCode|Notepad++|Word|Excel|Folder|Link|Pdf"
   ; for message repositioning.
   OK_MESSAGE := 4096
   YES_NO_DANGER_MESSAGE := 0x40114
@@ -632,9 +632,14 @@ DeleteEnvironment() {
   ShowMsgbox(YES_NO_DANGER_MESSAGE, "Warning", "Delete Environment?")
   IfMsgBox, Yes
   {
-    FileRemoveDir,  %AllEnvironmentsFolder%\%selectedEnvironment%
-    ShowMsgbox(OK_MESSAGE, "Info", "Environment deleted")
-    refreshEnvironments()
+    FileSetAttrib, -R, %AllEnvironmentsFolder%\%selectedEnvironment%
+    FileRemoveDir, %AllEnvironmentsFolder%\%selectedEnvironment%
+    If (ErrorLevel = 0) {
+      ShowMsgbox(OK_MESSAGE, "Info", "Environment deleted")
+      refreshEnvironments()
+      } else
+    msgbox, Cannot delete folder
+
   }
 
   }
@@ -1045,7 +1050,7 @@ examineShortcut(newShortcut) {
       if (AttributeString = "D")
         targetApp := "Folder"
       else
-        targetApp := "Text File"
+        targetApp := "Link"
     }
   
   newShortcut.app := targetApp
@@ -1124,7 +1129,7 @@ createShortcutFile() {
     case "Word":
     case "Excel":
     case "Pdf":
-    case "Text file":
+    case "Link":
     {
       GuiControlGet, selectedFile, , myShortcutTarget ; get target from gui
 
@@ -1228,7 +1233,7 @@ getFileFilter() {
   {
     case "VSCode":
     case "Folder":
-    case "Text file":
+    case "Link":
       filter := ""
     case "URL":
       filter := "*.htm; *.url; *.html"
