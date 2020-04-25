@@ -16,4 +16,4 @@ Applications currently supported:
 5. excel
 6. folder
 7. pdf
-8. folder
+8. link (any other file, eg executable, AHK, etc)
