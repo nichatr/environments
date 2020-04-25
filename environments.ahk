@@ -39,6 +39,8 @@ setupEnvironments()
   ;---------------------------------------------------------------------
 setupEnvironments() {
 
+  menu, tray, icon, %A_ScriptDir%/icons/development.png
+
   ; for drop down list.
   Applications := "Select application|URL|VSCode|Notepad++|Word|Excel|Folder|Link|Pdf"
   ; for message repositioning.
@@ -118,6 +120,8 @@ setupEnvironments() {
   loadSubGuis()
 
   OnMessage(0x200, "Help")  ; to show descriptions as tooltips on environments treeview.
+
+  Gui, 2:+E0x10
 
   ; Display the window and return. The OS will notify the script whenever the user performs an eligible action:
   Gui, 2:Show, W%GuiW% H%GuiH% x%GuiX% y%GuiY%, %AllEnvironmentsFolder%  ; Display the source directory (AllEnvironmentsFolder) in the title bar.
@@ -337,6 +341,22 @@ CloseButton:
   Gui, 3:Destroy
   Gui, 4:Destroy
   Return
+  ;----------------------------------------------------------------
+  ; drag & drop action on shortcuts: add files/folders as links.
+  ;----------------------------------------------------------------
+2GuiDropFiles(GuiHwnd, FileArray, CtrlHwnd, X, Y) {
+
+  ; enable drop only on shortcuts (listview).
+  ; if (CtrlHwnd = EnvironmentListViewHwnd) {
+    
+  getSelectedEnvironment()
+  if (selectedEnvironment = "")
+    Return
+    
+  for i, file in FileArray
+    MsgBox Environment= %selectedEnvironment% File %i% is:`n%file%
+    ; }
+  }
   ;----------------------------------------------------------------
   ; Launched in response to a right-click or press of the Apps key.
   ;----------------------------------------------------------------
