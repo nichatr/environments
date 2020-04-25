@@ -65,6 +65,9 @@ setupEnvironments() {
   IniRead, GuiY, %INI_file%, position, winY
   IniRead, GuiW, %INI_file%, position, winWidth
   IniRead, GuiH, %INI_file%, position, winHeight
+
+  getMonitorsSizes(minLeft, maxRight, maxBottom)
+  adjustGui_SizePosition(GuiX, GuiY, GuiW, GuiH, minLeft, maxRight, maxBottom)
   
   ; initialize with default values if any value is null
   if (GuiX = "" or GuiY = "" or GuiW = "" or GuiH = "") {
@@ -302,6 +305,7 @@ RefreshButton(CtrlHwnd:=0, GuiEvent:="", EventInfo:="", ErrLvl:="") {
       return
 
     Gui, 2:Default
+    ; Gui, 2:-Disabled
     
     GuiH := A_GuiHeight
     GuiW := A_GuiWidth
@@ -390,15 +394,15 @@ saveEnvironmentSettings() {
   if (isMinimized = -1 or saveOnExit != "true")
     Return
 
+  getMonitorsSizes(minLeft, maxRight, maxBottom)
   WinGetPos, winX, winY, winWidth, winHeight, ahk_id %gui2Hwnd%
+  adjustGui_SizePosition(winX, winY, winWidth, winHeight, minLeft, maxRight, maxBottom)
 
   ; save X, Y that are absolute values.
-  if (winX >= -7)
-    IniWrite, %winX%, %INI_file%, position, winX
-  if (winY > 0)
-    IniWrite, %winY%, %INI_file%, position, winY
+  IniWrite, %winX%, %INI_file%, position, winX
+  IniWrite, %winY%, %INI_file%, position, winY
 
-  GetClientSize(actWin, winWidth, winHeight)
+  getClientSize(actWin, winWidth, winHeight)
 
   if (winWidth > 0)
     IniWrite, %winWidth%, %INI_file%, position, winWidth
@@ -410,10 +414,44 @@ saveEnvironmentSettings() {
   FileEncoding, CP1253 
   IniWrite, %currentTimestamp%, %INI_file%, general, lastSavedTimestamp
   }
+  ;-------------------------------------------------
+  ; find number of monitors and their sizes
+  ; keep min left, max right, max bottom
+  ;-------------------------------------------------
+getMonitorsSizes(Byref minLeft := 0, ByRef maxRight := 0, ByRef maxBottom := 0) {
+  minLeft := 0
+  maxRight := 0
+  maxBottom := 0
+  sysget, monitorCount, MonitorCount
+  Loop, %monitorCount%
+    {
+      SysGet, Mon%A_Index%, Monitor, %A_Index%
+      if (Mon%A_Index%Left < minLeft)
+        minLeft := Mon%A_Index%Left
+      if (Mon%A_Index%Right > maxRight)
+        maxRight := Mon%A_Index%Right
+      if (Mon%A_Index%Bottom > maxBottom)
+        maxBottom := Mon%A_Index%Bottom
+    }
+  }
+  ;---------------------------------------------------------------------
+  ; adjust gui size and position to real display(s)
+  ;---------------------------------------------------------------------
+adjustGui_SizePosition(Byref winX, Byref winY, Byref winWidth, Byref winHeight, Byref minLeft, Byref maxRight, Byref maxBottom) {
+  
+  ; if left, right, bottom are beyond boundaries adjust them.
+  if (winX < minLeft - 7)
+    winX := minLeft - 7
+  if (winX > maxRight - winWidth)
+    winX := maxRight - winWidth
+  if (winY > maxBottom - winHeight - 30)
+    winY := maxBottom - winHeight - 30
+
+  }
   ;---------------------------------------------------------------------
   ; get actual gui size 
   ;---------------------------------------------------------------------
-GetClientSize(hWnd, ByRef w := "", ByRef h := "") {
+getClientSize(hWnd, ByRef w := "", ByRef h := "") {
     VarSetCapacity(rect, 16)
     DllCall("GetClientRect", "ptr", hWnd, "ptr", &rect)
     w := NumGet(rect, 8, "int")
@@ -967,7 +1005,7 @@ showSubgui3() {
   subGui3_X := targetX + (targetWidth - subGui3_W) / 2
   subGui3_Y := targetY + (targetHeight - subGui3_H) / 2
 
-  Gui, 2:+Disabled
+  ; Gui, 2:+Disabled
   Gui, 3:+OwnDialogs  ; Forces user to dismiss the following dialog before using main window.
 
   Gui, 3:Show, W%subGui3_W% H%subGui3_h% x%subGui3_X% y%subGui3_Y%, Gui 3
@@ -980,7 +1018,7 @@ showSubgui4() {
   subGui4_X := targetX + (targetWidth - subGui4_W) / 2
   subGui4_Y := targetY + (targetHeight - subGui4_H) / 2
 
-  Gui, 2:+Disabled
+  ; Gui, 2:+Disabled
   Gui, 4:+OwnDialogs  ; Forces user to dismiss the following dialog before using main window.
 
   Gui, 4:Show, W%subGui4_W% H%subGui4_h% x%subGui4_X% y%subGui4_Y%, Gui 4
