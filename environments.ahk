@@ -42,7 +42,7 @@ setupEnvironments() {
   menu, tray, icon, %A_ScriptDir%/icons/development.png
 
   ; for drop down list.
-  Applications := "Select application|URL|VSCode|Notepad++|Word|Excel|Folder|Link|Pdf"
+  Applications := "Select application|URL|VSCode|Notepad++|Word|Excel|Link|Pdf"
   ; for message repositioning.
   OK_MESSAGE := 4096
   YES_NO_DANGER_MESSAGE := 0x40114
@@ -174,7 +174,7 @@ loadSubGuis() {
   Gui, 3:Add, Edit, x200 yp w345 h21 r3 vmyShortcutTarget
 
   Gui, 3:Add, Button, xp+360 yp w80 h23 vSelectFileButton gSelectFileButton, File
-  Gui, 3:Add, Button, xp yp+25 w80 h23 vSelectFolderButton gSelectFolderButton Disabled, Folder
+  ; Gui, 3:Add, Button, xp yp+25 w80 h23 vSelectFolderButton gSelectFolderButton Disabled, Folder-
 
   Gui, 3:Add, Button, x250 yp+40 w80 h23 vSaveShortcutButton gSaveShortcutButton, Save
   Gui, 3:Add, Button, x350 yp w80 h23 vCancelShortcutButton gCancelShortcutButton Default, Cancel
@@ -225,6 +225,13 @@ EnvironmentListView_Events(CtrlHwnd:=0, GuiEvent:="", EventInfo:="", ErrLvl:="")
   {
     if (A_GuiEvent = "DoubleClick") {
       RunShortcut()
+      Return
+      }
+    
+    if (A_GuiEvent = "K") { ; pressed a key
+      keypressed := GetKeyName(Format("vk{:x}", A_EventInfo))
+      if (keypressed = "NumpadDel")
+        DeleteShortcut()
       Return
       }
 
@@ -346,16 +353,17 @@ CloseButton:
   ;----------------------------------------------------------------
 2GuiDropFiles(GuiHwnd, FileArray, CtrlHwnd, X, Y) {
 
-  ; enable drop only on shortcuts (listview).
-  ; if (CtrlHwnd = EnvironmentListViewHwnd) {
-    
   getSelectedEnvironment()
   if (selectedEnvironment = "")
     Return
     
   for i, file in FileArray
-    MsgBox Environment= %selectedEnvironment% File %i% is:`n%file%
-    ; }
+    {
+      SplitPath, file, FileName, Dir, Extension, NameNoExt, Drive
+      if (createShortcutFile("Link", NameNoExt, file))
+        refreshShortcuts()
+        ; MsgBox Environment= %selectedEnvironment% File %i% is:`n%file%
+    }
   }
   ;----------------------------------------------------------------
   ; Launched in response to a right-click or press of the Apps key.
@@ -575,7 +583,7 @@ SaveShortcutButton(CtrlHwnd:=0, GuiEvent:="", EventInfo:="", ErrLvl:="") {
     Return
     }
 
-  if (!createShortcutFile())
+  if (!createShortcutFile(selectedApp, myshortcutName, myShortcutTarget))
     Return
     
   Gui, 2:-Disabled
@@ -1102,14 +1110,16 @@ examineShortcut(newShortcut) {
     targetApp := "Pdf"
   
   ; when shortcut is a link check if the target is a file or a folder.
-  if (targetApp = "" and RegExMatch(newShortcut.name, "i).lnk$")) {
-    AttributeString := FileExist(newShortcut.target)
-    if (AttributeString)
-      if (AttributeString = "D")
-        targetApp := "Folder"
-      else
-        targetApp := "Link"
-    }
+  if (targetApp = "" and RegExMatch(newShortcut.name, "i).lnk$"))
+    ; {
+    ; AttributeString := FileExist(newShortcut.target)
+    ; if (AttributeString)
+    ;   if (AttributeString = "D")
+    ;     targetApp := "Folder"
+    ;   else
+    ;     targetApp := "Link"
+    ; }
+    targetApp := "Link"
   
   newShortcut.app := targetApp
   
@@ -1119,69 +1129,65 @@ examineShortcut(newShortcut) {
   ; returns True if shortcut was created successfully
   ; else False.
   ;---------------------------------------------------------------------
-createShortcutFile() {
+createShortcutFile(newApp, newshortcutName, newShortcutTarget) {
   ;
   ; add correct extension to shortcut name.
   ;
-  Switch selectedApp
+  Switch newApp
   {
     Case "URL":
-      if (!RegExMatch(myshortcutName, "i).url$"))
-        myshortcutName .= ".url"
+      if (!RegExMatch(newshortcutName, "i).url$"))
+        newshortcutName .= ".url"
     Default:
-      if (!RegExMatch(myshortcutName, "i).lnk$"))
-        myshortcutName .= ".lnk"
+      if (!RegExMatch(newshortcutName, "i).lnk$"))
+        newshortcutName .= ".lnk"
   }
   ;
   ; build shortcut full path name.
   ;
-  fullShortcutPath := AllEnvironmentsFolder . "\" . selectedEnvironment . "\" . myshortcutName
+  fullShortcutPath := AllEnvironmentsFolder . "\" . selectedEnvironment . "\" . newshortcutName
 
   shortcutDescription := "description of my new shortcut"
   shortcutArgs := ""
   ;
   ; build shortcut target and args.
   ;
-  Switch selectedApp
+  Switch newApp
   {
     case "VSCode":
     {
-      GuiControlGet, selectedTarget, , myShortcutTarget ; get target from gui
-
+      selectedTarget := newShortcutTarget
       AttributeString := FileExist(selectedTarget)  ; target may be folder or file
-      myShortcutTarget := "C:\Program Files\Microsoft VS Code\Code.exe"
+      newShortcutTarget := "C:\Program Files\Microsoft VS Code\Code.exe"
       shortcutArgs := "--new-window " . """" . selectedTarget . """" 
     }
 
     Case "Notepad++":
     {
-      GuiControlGet, selectedTarget, , myShortcutTarget ; get target from gui
-
+      selectedTarget := newShortcutTarget
       AttributeString := FileExist(selectedTarget)  ; target may be folder or file
-      myShortcutTarget := "C:\Program Files\Notepad++\notepad++.exe"
+      newShortcutTarget := "C:\Program Files\Notepad++\notepad++.exe"
       shortcutArgs := "-nosession " . """" . selectedTarget . """" 
     }
 
-    case "Folder":
-    {
-      GuiControlGet, selectedFolder, , myShortcutTarget ; get target from gui
-
-      AttributeString := FileExist(selectedFolder)  ; target must be folder
-      if (AttributeString = "") {
-        ShowMsgbox(OK_MESSAGE, "Warning", "Folder does not exist")
-        Return False
-        }
+    ; case "Folder":
+    ; {
+    ;   selectedFolder := newShortcutTarget
+    ;   AttributeString := FileExist(selectedFolder)  ; target must be folder
+    ;   if (AttributeString = "") {
+    ;     ShowMsgbox(OK_MESSAGE, "Warning", "Folder does not exist")
+    ;     Return False
+    ;     }
       
-      if (AttributeString != "D") {
-        ShowMsgbox(OK_MESSAGE, "Warning", "Target is not a folder")
-        Return False
-        }
+    ;   if (AttributeString != "D") {
+    ;     ShowMsgbox(OK_MESSAGE, "Warning", "Target is not a folder")
+    ;     Return False
+    ;     }
       
-      shortcutArgs := ""
-    }
+    ;   shortcutArgs := ""
+    ; }
 
     case "URL":
-      ; myShortcutTarget := """" . myShortcutTarget . """"
       shortcutArgs := ""
 
     case "Word":
@@ -1189,18 +1195,17 @@ createShortcutFile() {
     case "Pdf":
     case "Link":
     {
-      GuiControlGet, selectedFile, , myShortcutTarget ; get target from gui
-
-      AttributeString := FileExist(selectedFile)  ; target must be file
+      selectedTarget := newShortcutTarget
+      AttributeString := FileExist(selectedTarget)  ; target must be file
       if (AttributeString = "") {
         ShowMsgbox(OK_MESSAGE, "Warning", "File does not exist")
         Return False
         }
       
-      if (AttributeString = "D") {
-        ShowMsgbox(OK_MESSAGE, "Warning", "Target is a folder")
-        Return False
-        }
+      ; if (AttributeString = "D") {
+      ;   ShowMsgbox(OK_MESSAGE, "Warning", "Target is a folder")
+      ;   Return False
+      ;   }
 
       shortcutArgs := ""
     }
@@ -1212,11 +1217,11 @@ createShortcutFile() {
     FileDelete, %fullShortcutPath%
 
   ; create shortcut file, if no error return True
-  if (selectedApp = "URL") {
-    IniWrite, %myShortcutTarget%, %fullShortcutPath%, InternetShortcut, URL
+  if (newApp = "URL") {
+    IniWrite, %newShortcutTarget%, %fullShortcutPath%, InternetShortcut, URL
     }
   else {
-    FileCreateShortcut, %myShortcutTarget%, %fullShortcutPath%, , %shortcutArgs%, %shortcutDescription%
+    FileCreateShortcut, %newShortcutTarget%, %fullShortcutPath%, , %shortcutArgs%, %shortcutDescription%
   }
 
   if (ErrorLevel) {
@@ -1225,7 +1230,7 @@ createShortcutFile() {
     }
   else {
     ; delete old shortcut if changed name.    
-    if (oldShortcutName <> myshortcutName) {
+    if (oldShortcutName <> newshortcutName) {
       fullShortcutPath := AllEnvironmentsFolder . "\" . selectedEnvironment . "\" . oldShortcutName
       FileDelete, %fullShortcutPath%
       }
