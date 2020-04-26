@@ -19,7 +19,7 @@
   Global myshortcutName, myShortcutTarget, myEnvDescription, oldShortcutName
   Global SaveEnvironmentButton, CancelEnvironmentButton
   Global myApplicationDropdownList, SelectFolderButton, SelectFileButton, SaveShortcutButton, CancelShortcutButton, myEnvName
-  Global AllEnvironmentsFolder, selectedEnvironment, selectedDescription, selectedApp
+  Global AllEnvironmentsFolder, selectedEnvironment, selectedSubpath, selectedDescription, selectedApp
   Global GuiX, GuiY, GuiW, GuiH ; for positioning of main gui and msgboxes
   Global mainGui_title, subGui_title
   Global subGui3_X, subGui3_Y, subGui3_W, subGui3_H
@@ -650,7 +650,7 @@ RunEnvironment() {
   errorList := ""
 
   ; run all environment's shortcuts
-  Loop, Files, %A_ScriptDir%\environments\%selectedEnvironment%\*.*   ; means include only files
+  Loop, Files, %A_ScriptDir%\environments\%selectedSubpath%\*.*   ; means include only files
   {
     Run, %A_LoopFileFullPath%, UseErrorLevel
     if (ErrorLevel)
@@ -698,8 +698,8 @@ DeleteEnvironment() {
   ShowMsgbox(YES_NO_DANGER_MESSAGE, "Warning", "Delete Environment?")
   IfMsgBox, Yes
   {
-    FileSetAttrib, -R, %AllEnvironmentsFolder%\%selectedEnvironment%
-    FileRemoveDir, %AllEnvironmentsFolder%\%selectedEnvironment%
+    FileSetAttrib, -R, %AllEnvironmentsFolder%\%selectedSubpath%
+    FileRemoveDir, %AllEnvironmentsFolder%\%selectedSubpath%
     If (ErrorLevel = 0) {
       ShowMsgbox(OK_MESSAGE, "Info", "Environment deleted")
       refreshEnvironments()
@@ -722,11 +722,24 @@ getSelectedEnvironment() {
 
   Gui, 2:Default
   
-  TV_GetText(selectedEnvironment, TV_GetSelection())   ; get selected item text
+  parentID := TV_GetSelection()   ; get selected ID
+  TV_GetText(selectedEnvironment, parentID)   ; get selected item text
   if (selectedEnvironment = "") {
     ShowMsgbox(OK_MESSAGE, "Warning", "Select an environment")
+    Return
     }
 
+  ; if folder is nested get the full path upwards up to base folder (environments\)
+  selectedSubpath := selectedEnvironment
+
+  Loop  ; Build the full path to the selected folder.
+  {
+    ParentID := TV_GetParent(ParentID)
+    if not ParentID  ; No more ancestors.
+        break
+    TV_GetText(ParentText, ParentID)
+    selectedSubpath := ParentText "\" selectedSubpath
+  }
   }
   ;-------------------------------------------------
   ; reload treeview with environments
@@ -756,7 +769,7 @@ RunShortcut() {
 
   LV_GetText(shortcutFile, selectedRow, 1)
 
-  Run, %A_ScriptDir%\environments\%selectedEnvironment%\%shortcutFile%,, UseErrorLevel
+  Run, %A_ScriptDir%\environments\%selectedSubpath%\%shortcutFile%,, UseErrorLevel
   if (ErrorLevel <> 0)
     ShowMsgbox(OK_MESSAGE, "Warning", "Could not run shortcut")
   }
@@ -809,7 +822,7 @@ DeleteShortcut() {
   IfMsgBox, Yes
   {
     LV_GetText(shortcutName, selectedRow, 1)
-    FileDelete, %AllEnvironmentsFolder%\%selectedEnvironment%\%shortcutName%
+    FileDelete, %AllEnvironmentsFolder%\%selectedSubpath%\%shortcutName%
     refreshShortcuts()
   }
   }
@@ -836,7 +849,7 @@ loadShortcuts(selectedID) {
 
   IniRead, environmentDescription, %A_ScriptDir%\%INI_file%, %selectedEnvironment%, description
   ParentID := selectedID
-  SelectedItemText := selectedEnvironment
+  selectedSubpath := selectedEnvironment
 
   Loop  ; Build the full path to the selected folder.
   {
@@ -844,9 +857,9 @@ loadShortcuts(selectedID) {
     if not ParentID  ; No more ancestors.
         break
     TV_GetText(ParentText, ParentID)
-    SelectedItemText := ParentText "\" SelectedItemText
+    selectedSubpath := ParentText "\" selectedSubpath
   }
-  SelectedFullPath := AllEnvironmentsFolder "\" SelectedItemText
+  SelectedFullPath := AllEnvironmentsFolder "\" selectedSubpath
 
   LV_Delete()  ; Clear all rows.
   IL_Destroy(ImageListID1)  ; small shortcuts icons
@@ -1145,7 +1158,7 @@ createShortcutFile(newApp, newshortcutName, newShortcutTarget) {
   ;
   ; build shortcut full path name.
   ;
-  fullShortcutPath := AllEnvironmentsFolder . "\" . selectedEnvironment . "\" . newshortcutName
+  fullShortcutPath := AllEnvironmentsFolder . "\" . selectedSubpath . "\" . newshortcutName
 
   shortcutDescription := "description of my new shortcut"
   shortcutArgs := ""
@@ -1231,7 +1244,7 @@ createShortcutFile(newApp, newshortcutName, newShortcutTarget) {
   else {
     ; delete old shortcut if changed name.    
     if (oldShortcutName <> newshortcutName) {
-      fullShortcutPath := AllEnvironmentsFolder . "\" . selectedEnvironment . "\" . oldShortcutName
+      fullShortcutPath := AllEnvironmentsFolder . "\" . selectedSubpath . "\" . oldShortcutName
       FileDelete, %fullShortcutPath%
       }
     Return True
