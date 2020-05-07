@@ -176,7 +176,7 @@ loadSubGuis() {
   Gui, 3:Add, Button, xp+360 yp w80 h23 vSelectFileButton gSelectFileButton, File
   ; Gui, 3:Add, Button, xp yp+25 w80 h23 vSelectFolderButton gSelectFolderButton Disabled, Folder-
 
-  Gui, 3:Add, Button, x250 yp+40 w80 h23 vSaveShortcutButton gSaveShortcutButton, Save
+  Gui, 3:Add, Button, x250 yp+65 w80 h23 vSaveShortcutButton gSaveShortcutButton, Save
   Gui, 3:Add, Button, x350 yp w80 h23 vCancelShortcutButton gCancelShortcutButton Default, Cancel
   ;-----------------------------------------
   ; initialize secondary <environment> gui
@@ -412,9 +412,10 @@ contextMenuHandler:
   ; save settings to ini  
   ;---------------------------------------------------------------------
 saveEnvironmentSettings() {
-  actWin := WinExist("A")
+  ; actWin := WinExist("A")
   ; actWin := WinExist("ahk_id" . %gui2Hwnd%)
-  WinGet, isMinimized , MinMax, actWin
+  ; WinGet, isMinimized , MinMax, actWin
+  WinGet, isMinimized , MinMax, ahk_id %gui2Hwnd%
   IniRead, saveOnExit, %INI_file%, general, saveOnExit
 
   ; on exit save position & size of window
