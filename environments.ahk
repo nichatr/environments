@@ -18,7 +18,7 @@
   Global RunButton, NewButton, EditButton, DeleteButton, RefreshButton, CloseButton
   Global myshortcutName, myShortcutTarget, myEnvDescription, oldShortcutName
   Global SaveEnvironmentButton, CancelEnvironmentButton
-  Global myApplicationDropdownList, SelectFolderButton, SelectFileButton, SaveShortcutButton, CancelShortcutButton, myEnvName
+  Global myApplicationDropdownList, SelectFileButton, SaveShortcutButton, CancelShortcutButton, myEnvName
   Global AllEnvironmentsFolder, selectedEnvironment, selectedSubpath, selectedDescription, selectedApp
   Global GuiX, GuiY, GuiW, GuiH ; for positioning of main gui and msgboxes
   Global mainGui_title, subGui_title
@@ -174,7 +174,6 @@ loadSubGuis() {
   Gui, 3:Add, Edit, x200 yp w345 h21 r3 vmyShortcutTarget
 
   Gui, 3:Add, Button, xp+360 yp w80 h23 vSelectFileButton gSelectFileButton, File
-  ; Gui, 3:Add, Button, xp yp+25 w80 h23 vSelectFolderButton gSelectFolderButton Disabled, Folder-
 
   Gui, 3:Add, Button, x250 yp+65 w80 h23 vSaveShortcutButton gSaveShortcutButton, Save
   Gui, 3:Add, Button, x350 yp w80 h23 vCancelShortcutButton gCancelShortcutButton Default, Cancel
@@ -615,29 +614,12 @@ SelectFileButton(CtrlHwnd:=0, GuiEvent:="", EventInfo:="", ErrLvl:="") {
 
   filter := getFileFilter()
 
-  selectFolderEnabled := False
-  selectedFile := fileFolderSelector(selectFolderEnabled, filter)
+  selectedFile := fileFolderSelector(filter)
   if (selectedFile = "")
     Return
 
   ; this is the way to change a control in another Gui.
   GuiControl, 3:, myShortcutTarget, %selectedFile%
-  }
-  ;----------------------------------------------
-  ; it is executed when folder button is pressed.
-  ;----------------------------------------------
-SelectFolderButton(CtrlHwnd:=0, GuiEvent:="", EventInfo:="", ErrLvl:="") {
-  
-  if (isEmptyApplication())
-    Return
-
-  filter := ""
-  selectFolderEnabled := True
-  selectedFolder := fileFolderSelector(selectFolderEnabled, filter)
-  if (selectedFolder = "")
-    Return
-  
-  GuiControl, 3:, myShortcutTarget, %selectedFolder%
   }
   ;-------------------------------------------------
   ; run environment handler
@@ -1271,7 +1253,7 @@ createShortcutFile(newApp, newshortcutName, newShortcutTarget) {
   ;---------------------------------------------------------------------
   ; select file or folder
   ;---------------------------------------------------------------------
-fileFolderSelector(selectFolderEnabled, filter, Prompt = "Alt Right Mouse Click to select Folder") {
+fileFolderSelector(filter, Prompt = "Alt Right Mouse Click to select Folder") {
 
   Gui, +OwnDialogs  ; Forces user to dismiss the following dialog before using main window.
 
