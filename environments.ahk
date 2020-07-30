@@ -84,6 +84,7 @@ setupEnvironments() {
   
   mainGui_title := A_ScriptName
   Gui, 2:New, +Resize +Hwndgui2Hwnd, %mainGui_title%
+  Gui, 2:Font, s10
   Gui, %gui2Hwnd%:Default
 
   ; Create an ImageList and put some standard system icons into it:
@@ -175,8 +176,8 @@ loadSubGuis() {
 
   Gui, 3:Add, Button, xp+360 yp w80 h23 vSelectFileButton gSelectFileButton, File
 
-  Gui, 3:Add, Button, x250 yp+65 w80 h23 vSaveShortcutButton gSaveShortcutButton, Save
-  Gui, 3:Add, Button, x350 yp w80 h23 vCancelShortcutButton gCancelShortcutButton Default, Cancel
+  Gui, 3:Add, Button, x250 yp+65 w80 h23 vSaveShortcutButton gSaveShortcutButton Default, Save
+  Gui, 3:Add, Button, x350 yp w80 h23 vCancelShortcutButton gCancelShortcutButton, Cancel
   ;-----------------------------------------
   ; initialize secondary <environment> gui
   ;-----------------------------------------
@@ -196,8 +197,8 @@ loadSubGuis() {
   Gui, 4:Add, Text, x40 yp+30 w80 h23 +0x200 Section, Description
   Gui, 4:Add, Edit, x120 yp w450 h23 vmyEnvDescription
   
-  Gui, 4:Add, Button, x250 yp+40 w80 h23 vSaveEnvironmentButton gSaveEnvironmentButton, Save
-  Gui, 4:Add, Button, x350 yp w80 h23 vCancelEnvironmentButton gCancelEnvironmentButton Default, Cancel
+  Gui, 4:Add, Button, x250 yp+40 w80 h23 vSaveEnvironmentButton gSaveEnvironmentButton Default, Save
+  Gui, 4:Add, Button, x350 yp w80 h23 vCancelEnvironmentButton gCancelEnvironmentButton, Cancel
   }
   ;-------------------------------------------------  
   ; events for treeview (environments).
