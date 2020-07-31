@@ -151,32 +151,33 @@ loadSubGuis() {
   ;-----------------------------------------
   ; initialize secondary <shortcut> gui
   ;-----------------------------------------
-  subGui3_W := 700
+  subGui3_W := 750
   subGui3_H := 270
   subGui_title := "Manage shortcut"
 
   Gui, 3:Destroy
   Gui, 3:New, -Caption +Hwndgui3Hwnd, %subGui_title%
+  Gui, 3:Font, s10
   Gui, 3:+Owner
 
-  Gui, 3:Add, GroupBox, xm+5 y+10 w650 h250, Manage shortcut
+  Gui, 3:Add, GroupBox, xm+5 y+10 w700 h250, Manage shortcut
 
   Gui, 3:Add, Text, x40 y50 w80 h23 +0x200 Section, Environment
-  Gui, 3:Add, Text, x200 yp+5 w345 h23 vmyEnvName , TEST
+  Gui, 3:Add, Text, xp+200 yp+5 w345 h23 vmyEnvName , TEST
 
-  Gui, 3:Add, Text, x40 yp+25 w162 h23 +0x200, Open Shortcut with Application
+  Gui, 3:Add, Text, x40 yp+25 w180 h23 +0x200, Open Shortcut with Application
   newList := StrReplace(Applications, "Select application", "Select application|")
-  Gui, 3:Add, DropDownList, x200 yp w201 vmyApplicationDropdownList gmyApplicationDropdownList, %newList%
+  Gui, 3:Add, DropDownList, xp+200 yp w201 vmyApplicationDropdownList gmyApplicationDropdownList, %newList%
 
   Gui, 3:Add, Text, x40 yp+30 w75 h23 +0x200, Shortcut Name
-  Gui, 3:Add, Edit, x200 yp w345 h21 vmyshortcutName
+  Gui, 3:Add, Edit, xp+200 yp w345 h21 vmyshortcutName
 
   Gui, 3:Add, Text, x40 yp+30 w160 h23 +0x200, Select Shortcut Link Target
-  Gui, 3:Add, Edit, x200 yp w345 h21 r3 vmyShortcutTarget
+  Gui, 3:Add, Edit, xp+200 yp w345 h21 r3 vmyShortcutTarget
 
   Gui, 3:Add, Button, xp+360 yp w80 h23 vSelectFileButton gSelectFileButton, File
 
-  Gui, 3:Add, Button, x250 yp+65 w80 h23 vSaveShortcutButton gSaveShortcutButton Default, Save
+  Gui, 3:Add, Button, xp+200 yp+65 w80 h23 vSaveShortcutButton gSaveShortcutButton Default, Save
   Gui, 3:Add, Button, x350 yp w80 h23 vCancelShortcutButton gCancelShortcutButton, Cancel
   ;-----------------------------------------
   ; initialize secondary <environment> gui
@@ -187,6 +188,7 @@ loadSubGuis() {
 
   Gui, 4:Destroy
   Gui, 4:New, -Caption +Hwndgui4Hwnd, %subGui_title%
+  Gui, 4:Font, s10
   Gui, 4:+Owner
 
   Gui, 4:Add, GroupBox, xm+5 y+10 w650 h250, Manage environment
