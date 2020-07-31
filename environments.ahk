@@ -177,7 +177,7 @@ loadSubGuis() {
 
   Gui, 3:Add, Button, xp+360 yp w80 h23 vSelectFileButton gSelectFileButton, File
 
-  Gui, 3:Add, Button, xp+200 yp+65 w80 h23 vSaveShortcutButton gSaveShortcutButton Default, Save
+  Gui, 3:Add, Button, x250 yp+65 w80 h23 vSaveShortcutButton gSaveShortcutButton Default, Save
   Gui, 3:Add, Button, x350 yp w80 h23 vCancelShortcutButton gCancelShortcutButton, Cancel
   ;-----------------------------------------
   ; initialize secondary <environment> gui
