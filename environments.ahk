@@ -169,7 +169,7 @@ loadSubGuis() {
   newList := StrReplace(Applications, "Select application", "Select application|")
   Gui, 3:Add, DropDownList, xp+200 yp w201 vmyApplicationDropdownList gmyApplicationDropdownList, %newList%
 
-  Gui, 3:Add, Text, x40 yp+30 w75 h23 +0x200, Shortcut Name
+  Gui, 3:Add, Text, x40 yp+30 w100 h23 +0x200, Shortcut Name
   Gui, 3:Add, Edit, xp+200 yp w345 h21 vmyshortcutName
 
   Gui, 3:Add, Text, x40 yp+30 w160 h23 +0x200, Select Shortcut Link Target
