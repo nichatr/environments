@@ -82,9 +82,10 @@ setupEnvironments() {
   TreeViewWidth := 280
   ListViewWidth := GuiW - TreeViewWidth - 30
   
+  IniRead, fontSize, %INI_file%, general, fontSize
   mainGui_title := A_ScriptName
   Gui, 2:New, +Resize +Hwndgui2Hwnd, %mainGui_title%
-  Gui, 2:Font, s10
+  Gui, 2:Font, s%fontSize%
   Gui, %gui2Hwnd%:Default
 
   ; Create an ImageList and put some standard system icons into it:
@@ -157,7 +158,7 @@ loadSubGuis() {
 
   Gui, 3:Destroy
   Gui, 3:New, -Caption +Hwndgui3Hwnd, %subGui_title%
-  Gui, 3:Font, s10
+  Gui, 3:Font, s%fontSize%
   Gui, 3:+Owner
 
   Gui, 3:Add, GroupBox, xm+5 y+10 w700 h250, Manage shortcut
@@ -188,7 +189,7 @@ loadSubGuis() {
 
   Gui, 4:Destroy
   Gui, 4:New, -Caption +Hwndgui4Hwnd, %subGui_title%
-  Gui, 4:Font, s10
+  Gui, 4:Font, s%fontSize%
   Gui, 4:+Owner
 
   Gui, 4:Add, GroupBox, xm+5 y+10 w650 h250, Manage environment
