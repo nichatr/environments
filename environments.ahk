@@ -29,7 +29,7 @@
   Global OK_MESSAGE, YES_NO_DANGER_MESSAGE
   Global lastClicked
   Global Applications, environmentDescription
-  Global INI_file
+  Global INI_file, fontSize
   Global ImageListID1, ImageListID2
 
 setupEnvironments()
