@@ -42,7 +42,7 @@ setupEnvironments() {
   menu, tray, icon, %A_ScriptDir%/icons/development.png
 
   ; for drop down list.
-  Applications := "Select application|URL|VSCode|Notepad++|Word|Excel|Link|Pdf"
+  Applications := "Select application|URL|VSCode|Notepad++|Powershell|Word|Excel|Link|Pdf"
   ; for message repositioning.
   OK_MESSAGE := 4096
   YES_NO_DANGER_MESSAGE := 0x40114
@@ -1006,6 +1006,13 @@ loadGui3(selectedRow) {
       shortcutTarget := Trim(shortcutTarget)
     }
 
+    Case "Powershell":
+    {
+      LV_GetText(shortcutArgs, selectedRow, 4)  ; get actual target from args
+      shortcutTarget := RegExReplace(shortcutArgs, """")  ; remove double quotes 
+      shortcutTarget := Trim(shortcutTarget)
+    }
+
     Default:
       LV_GetText(shortcutTarget, selectedRow, 3)
   }
@@ -1092,6 +1099,11 @@ examineShortcut(newShortcut) {
     targetApp := "Notepad++"
   }
 
+  if (RegExMatch(newShortcut.target, "i)\\powershell.exe$")) {
+    targetApp := "Powershell"
+    newShortcut.args := newShortcut.path  ; for powershell the args are the path to the folder opened.
+  }
+
   ; for URLs the address is inside the text file.
   if (RegExMatch(newShortcut.name, "i).url$")) {
     targetApp := "URL"
@@ -1149,6 +1161,7 @@ createShortcutFile(newApp, newshortcutName, newShortcutTarget) {
 
   shortcutDescription := "description of my new shortcut"
   shortcutArgs := ""
+  workingDir := ""
   ;
   ; build shortcut target and args.
   ;
@@ -1168,6 +1181,15 @@ createShortcutFile(newApp, newshortcutName, newShortcutTarget) {
       AttributeString := FileExist(selectedTarget)  ; target may be folder or file
       newShortcutTarget := "C:\Program Files\Notepad++\notepad++.exe"
       shortcutArgs := "-nosession " . """" . selectedTarget . """" 
+    }
+    
+    Case "Powershell":
+    {
+      selectedTarget := newShortcutTarget
+      AttributeString := FileExist(selectedTarget)  ; target must be folder
+      newShortcutTarget := "%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe"
+      workingDir :=  selectedTarget
+      ; workingDir := """" . selectedTarget . """" 
     }
 
     ; case "Folder":
@@ -1221,7 +1243,7 @@ createShortcutFile(newApp, newshortcutName, newShortcutTarget) {
     IniWrite, %newShortcutTarget%, %fullShortcutPath%, InternetShortcut, URL
     }
   else {
-    FileCreateShortcut, %newShortcutTarget%, %fullShortcutPath%, , %shortcutArgs%, %shortcutDescription%
+    FileCreateShortcut, %newShortcutTarget%, %fullShortcutPath%, %workingDir%, %shortcutArgs%, %shortcutDescription%
   }
 
   if (ErrorLevel) {
