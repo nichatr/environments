@@ -755,6 +755,9 @@ RunShortcut() {
     }
 
   LV_GetText(shortcutFile, selectedRow, 1)
+  LV_GetText(app, selectedRow, 2) ; check if app=URL --> add extension .url otherwise it cannot run.
+  if (app = "URL")
+    shortcutFile .= ".url"
 
   Run, %A_ScriptDir%\environments\%selectedSubpath%\%shortcutFile%,, UseErrorLevel
   if (ErrorLevel <> 0)
@@ -877,8 +880,12 @@ loadShortcuts(selectedID) {
 
     ; populate any necessary information.
     examineShortcut(newShortcut)
+    
+    ; trim the shortcut extension.
+    SplitPath, A_LoopFileName, selectedFileName, selectedDir, selectedExtension, selectedNameNoExt, selectedDrive
+    shortcutName := selectedNameNoExt
 
-    row := LV_Add("Icon" . IconNumber, A_LoopFileName, newShortcut.app, newShortcut.target, newShortcut.args)
+    row := LV_Add("Icon" . IconNumber, selectedNameNoExt, newShortcut.app, newShortcut.target, newShortcut.args)
     }
 
   LV_ModifyCol()  ; Auto-size each column to fit its contents.
