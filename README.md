@@ -16,4 +16,5 @@ Applications currently supported:
 5. excel
 6. folder
 7. pdf
-8. link (any other file, eg executable, AHK, etc)
+8. powershell
+9. link (any other file, eg executable, AHK, etc)
