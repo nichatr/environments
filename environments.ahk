@@ -411,13 +411,10 @@ contextMenuHandler:
 
   Return
   }
- ;---------------------------------------------------------------------
+  ;---------------------------------------------------------------------
   ; save settings to ini  
   ;---------------------------------------------------------------------
 saveEnvironmentSettings() {
-  ; actWin := WinExist("A")
-  ; actWin := WinExist("ahk_id" . %gui2Hwnd%)
-  ; WinGet, isMinimized , MinMax, actWin
   WinGet, isMinimized , MinMax, ahk_id %gui2Hwnd%
   IniRead, saveOnExit, %INI_file%, general, saveOnExit
 
@@ -434,7 +431,7 @@ saveEnvironmentSettings() {
   IniWrite, %winX%, %INI_file%, position, winX
   IniWrite, %winY%, %INI_file%, position, winY
 
-  getClientSize(actWin, winWidth, winHeight)
+  getClientSize(gui2Hwnd, winWidth, winHeight)
 
   if (winWidth > 0)
     IniWrite, %winWidth%, %INI_file%, position, winWidth
