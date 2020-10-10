@@ -1137,31 +1137,38 @@ createShortcutFile(newApp, shortcutName, linkFile) {
   workingDir := ""
   shortcutArgs := ""
 
-  ; delete shortcut file if it exists
-  if FileExist(fullShortcutPath)
-    FileDelete, %fullShortcutPath%
 
   Switch newApp
   {
     case "URL":
     {
-    if (!RegExMatch(shortcutName, "i).\.url$"))
+    if (!RegExMatch(shortcutName, "i).\.url$")) {
       shortcutName .= ".url"
+      oldShortcutName .= ".url"
+      }
         
     ; build shortcut full path name.
-    fullShortcutPath := A_ScriptDir . "\" . shortcutName
+    fullShortcutPath := AllEnvironmentsFolder . "\" . selectedSubpath . "\" . shortcutName
+    ; delete shortcut file if it exists
+    if FileExist(fullShortcutPath)
+      FileDelete, %fullShortcutPath%
 
     IniWrite, %linkFile%, %fullShortcutPath%, InternetShortcut, URL
     }
 
     case "Link":
     {
-    if (!RegExMatch(shortcutName, "i).\.lnk$"))
+    if (!RegExMatch(shortcutName, "i).\.lnk$")) {
       shortcutName .= ".lnk"
-        
-    ; build shortcut full path name.
-    fullShortcutPath := A_ScriptDir . "\" . shortcutName
+      oldShortcutName .= ".lnk"
+      }
     
+    ; build shortcut full path name.
+    fullShortcutPath := AllEnvironmentsFolder . "\" . selectedSubpath . "\" . shortcutName
+    ; delete shortcut file if it exists
+    if FileExist(fullShortcutPath)
+      FileDelete, %fullShortcutPath%
+
     target := linkFile
 
     FileCreateShortcut, %target%, %fullShortcutPath%, %workingDir%, %shortcutArgs%
@@ -1170,19 +1177,24 @@ createShortcutFile(newApp, shortcutName, linkFile) {
     ; all other types of shortcuts.
     Default:
     {
-    if (!RegExMatch(shortcutName, "i).\.lnk$"))
+    if (!RegExMatch(shortcutName, "i).\.lnk$")) {
       shortcutName .= ".lnk"
-        
+      oldShortcutName .= ".lnk"
+      }
+
     ; build shortcut full path name.
-    fullShortcutPath := A_ScriptDir . "\" . shortcutName
-    
-    if (args <> "") {
-      shortcutArgs := args
+    fullShortcutPath := AllEnvironmentsFolder . "\" . selectedSubpath . "\" . shortcutName
+    ; delete shortcut file if it exists
+    if FileExist(fullShortcutPath)
+      FileDelete, %fullShortcutPath%
+
+    if (AppsObject.Apps[newApp].args <> "") {
+      shortcutArgs := AppsObject.Apps[newApp].args
     }
     
-    target := appPath
+    target := AppsObject.Apps[newApp].appPath
 
-    if (target_in_workingDir) {
+    if (AppsObject.Apps[newApp].target_in_workingDir) {
       workingDir :=  linkFile
     } else if (target <> "") {
       shortcutArgs .= " """ . linkFile . """"
@@ -1205,6 +1217,7 @@ createShortcutFile(newApp, shortcutName, linkFile) {
     FileDelete, %fullShortcutPath%
     }
 
+  Return True ; means to hide the current window and show the main window.
   }
   ;---------------------------------------------------------------------
   ; hot key valid only on file selection gui.
@@ -1283,6 +1296,7 @@ getFileFilter() {
   ; get defined apps from json
   ;--------------------------------
 getDefinedApps() {
+  Global
   output_string := "Select application"
   AppsObject := ""
   json_contents := ""    
