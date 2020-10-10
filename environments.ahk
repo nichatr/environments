@@ -31,6 +31,7 @@
   Global Applications, environmentDescription
   Global INI_file, fontSize
   Global ImageListID1, ImageListID2
+  Global AppsObject
 
 setupEnvironments()
   return
@@ -42,7 +43,8 @@ setupEnvironments() {
   menu, tray, icon, %A_ScriptDir%/icons/development.png
 
   ; for drop down list.
-  Applications := "Select application|URL|VSCode|Notepad++|Powershell|Word|Excel|Link|Pdf"
+  Applications := getDefinedApps()
+  ; Applications := "Select application|URL|VSCode|Notepad++|Powershell|Word|Excel|Link|Pdf"
   ; for message repositioning.
   OK_MESSAGE := 4096
   YES_NO_DANGER_MESSAGE := 0x40114
@@ -988,7 +990,7 @@ loadGui3(selectedRow) {
 
   LV_GetText(shortcutName, selectedRow, 1)
   GuiControl, 3:, myshortcutName, %shortcutName%  ; update the shortcut name
-  oldShortcutName := shortcutName
+  oldShortcutName := shortcutName ; keep current shortcut name in case it is changed (to delete the old one).
 
   Switch ShortcutApp
   {
@@ -1086,181 +1088,121 @@ WinMoveMsgBox:
   WinMove, %title%, , %newX%, %newY%
   Return
   }
-  ;-------------------------------------
-  ; populate any necessary information.
-  ;-------------------------------------
+  ;---------------------------------------------------------------------
+  ; find the shortcut's APP and define in the shortcut's class instance
+  ;---------------------------------------------------------------------
 examineShortcut(newShortcut) {
   if (newShortcut.name = "")
     return False
 
   targetApp := ""
 
-  if (RegExMatch(newShortcut.target, "i)\\code.exe$")) {
-    targetApp := "VSCode"
+  ; extract file from target's path.
+  fullPath := newShortcut.target
+  SplitPath, fullPath, FileName, Dir, Extension, NameNoExt, Drive
+
+  ; search all defined apps.
+  For key, value in AppsObject.Apps {
+    if (InStr(value.appPath, FileName) > 0) {
+      targetApp := key
+      if (value.target_in_workingDir)
+        newShortcut.args := newShortcut.path  ; for powershell the args are the path to the folder opened.
+      break
+    }
   }
 
-  if (RegExMatch(newShortcut.target, "i)\\notepad\+\+.exe$")) {
-    targetApp := "Notepad++"
-  }
+  ; when no special app found: check if shortcut's extension is .lnk
+  if (targetApp = "" and RegExMatch(newShortcut.name, "i).\.lnk$"))
+    targetApp := "Link"
 
-  if (RegExMatch(newShortcut.target, "i)\\powershell.exe$")) {
-    targetApp := "Powershell"
-    newShortcut.args := newShortcut.path  ; for powershell the args are the path to the folder opened.
-  }
-
-  ; for URLs the address is inside the text file.
-  if (RegExMatch(newShortcut.name, "i).url$")) {
+  ; when no special app found: check if shortcut's extension is .url
+  if (targetApp = "" and RegExMatch(newShortcut.name, "i).\.url$")) {
     targetApp := "URL"
     file := newShortcut.name
     IniRead, OutputVar, %file%, InternetShortcut, URL
     newShortcut.target := OutputVar
-    }
-
-  if (RegExMatch(newShortcut.target, "i).doc[x*]$"))
-    targetApp := "Word"
-
-  if (RegExMatch(newShortcut.target, "i).xls[x*|m*]$"))
-    targetApp := "Excel"
-
-  if (RegExMatch(newShortcut.target, "i).pdf$"))
-    targetApp := "Pdf"
-  
-  ; when shortcut is a link check if the target is a file or a folder.
-  if (targetApp = "" and RegExMatch(newShortcut.name, "i).lnk$"))
-    ; {
-    ; AttributeString := FileExist(newShortcut.target)
-    ; if (AttributeString)
-    ;   if (AttributeString = "D")
-    ;     targetApp := "Folder"
-    ;   else
-    ;     targetApp := "Link"
-    ; }
-    targetApp := "Link"
+  }
   
   newShortcut.app := targetApp
-  
+
   }
   ;---------------------------------------------------------------------
   ; create new/delete old and create: shortcut
   ; returns True if shortcut was created successfully
   ; else False.
   ;---------------------------------------------------------------------
-createShortcutFile(newApp, newshortcutName, newShortcutTarget) {
-  ;
-  ; add correct extension to shortcut name.
-  ;
-  Switch newApp
-  {
-    Case "URL":
-      if (!RegExMatch(newshortcutName, "i).url$"))
-        newshortcutName .= ".url"
-    Default:
-      if (!RegExMatch(newshortcutName, "i).lnk$"))
-        newshortcutName .= ".lnk"
-  }
-  ;
-  ; build shortcut full path name.
-  ;
-  fullShortcutPath := AllEnvironmentsFolder . "\" . selectedSubpath . "\" . newshortcutName
+createShortcutFile(newApp, shortcutName, linkFile) {
 
-  shortcutDescription := "description of my new shortcut"
-  shortcutArgs := ""
+  fullShortcutPath := ""
   workingDir := ""
-  ;
-  ; build shortcut target and args.
-  ;
-  Switch newApp
-  {
-    case "VSCode":
-    {
-      selectedTarget := newShortcutTarget
-      AttributeString := FileExist(selectedTarget)  ; target may be folder or file
-      newShortcutTarget := "C:\Program Files\Microsoft VS Code\Code.exe"
-      shortcutArgs := "--new-window " . """" . selectedTarget . """" 
-    }
+  shortcutArgs := ""
 
-    Case "Notepad++":
-    {
-      selectedTarget := newShortcutTarget
-      AttributeString := FileExist(selectedTarget)  ; target may be folder or file
-      newShortcutTarget := "C:\Program Files\Notepad++\notepad++.exe"
-      shortcutArgs := "-nosession " . """" . selectedTarget . """" 
-    }
-    
-    Case "Powershell":
-    {
-      selectedTarget := newShortcutTarget
-      AttributeString := FileExist(selectedTarget)  ; target must be folder
-      newShortcutTarget := "%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe"
-      workingDir :=  selectedTarget
-      ; workingDir := """" . selectedTarget . """" 
-    }
-
-    ; case "Folder":
-    ; {
-    ;   selectedFolder := newShortcutTarget
-    ;   AttributeString := FileExist(selectedFolder)  ; target must be folder
-    ;   if (AttributeString = "") {
-    ;     ShowMsgbox(OK_MESSAGE, "Warning", "Folder does not exist")
-    ;     Return False
-    ;     }
-      
-    ;   if (AttributeString != "D") {
-    ;     ShowMsgbox(OK_MESSAGE, "Warning", "Target is not a folder")
-    ;     Return False
-    ;     }
-      
-    ;   shortcutArgs := ""
-    ; }
-
-    case "URL":
-      shortcutArgs := ""
-
-    case "Word":
-    case "Excel":
-    case "Pdf":
-    case "Link":
-    {
-      selectedTarget := newShortcutTarget
-      AttributeString := FileExist(selectedTarget)  ; target must be file
-      if (AttributeString = "") {
-        ShowMsgbox(OK_MESSAGE, "Warning", "File does not exist")
-        Return False
-        }
-      
-      ; if (AttributeString = "D") {
-      ;   ShowMsgbox(OK_MESSAGE, "Warning", "Target is a folder")
-      ;   Return False
-      ;   }
-
-      shortcutArgs := ""
-    }
-  }
-  ;
   ; delete shortcut file if it exists
-  ;
   if FileExist(fullShortcutPath)
     FileDelete, %fullShortcutPath%
 
-  ; create shortcut file, if no error return True
-  if (newApp = "URL") {
-    IniWrite, %newShortcutTarget%, %fullShortcutPath%, InternetShortcut, URL
+  Switch newApp
+  {
+    case "URL":
+    {
+    if (!RegExMatch(shortcutName, "i).\.url$"))
+      shortcutName .= ".url"
+        
+    ; build shortcut full path name.
+    fullShortcutPath := A_ScriptDir . "\" . shortcutName
+
+    IniWrite, %linkFile%, %fullShortcutPath%, InternetShortcut, URL
     }
-  else {
-    FileCreateShortcut, %newShortcutTarget%, %fullShortcutPath%, %workingDir%, %shortcutArgs%, %shortcutDescription%
+
+    case "Link":
+    {
+    if (!RegExMatch(shortcutName, "i).\.lnk$"))
+      shortcutName .= ".lnk"
+        
+    ; build shortcut full path name.
+    fullShortcutPath := A_ScriptDir . "\" . shortcutName
+    
+    target := linkFile
+
+    FileCreateShortcut, %target%, %fullShortcutPath%, %workingDir%, %shortcutArgs%
+    }
+  
+    ; all other types of shortcuts.
+    Default:
+    {
+    if (!RegExMatch(shortcutName, "i).\.lnk$"))
+      shortcutName .= ".lnk"
+        
+    ; build shortcut full path name.
+    fullShortcutPath := A_ScriptDir . "\" . shortcutName
+    
+    if (args <> "") {
+      shortcutArgs := args
+    }
+    
+    target := appPath
+
+    if (target_in_workingDir) {
+      workingDir :=  linkFile
+    } else if (target <> "") {
+      shortcutArgs .= " """ . linkFile . """"
+    } else {
+      target := linkFile
+    }
+
+    FileCreateShortcut, %target%, %fullShortcutPath%, %workingDir%, %shortcutArgs%
+    }
   }
 
   if (ErrorLevel) {
     ShowMsgbox(OK_MESSAGE, "Warning", "Could not create the shortcut")
     Return False
     }
-  else {
-    ; delete old shortcut if changed name.    
-    if (oldShortcutName <> newshortcutName) {
-      fullShortcutPath := AllEnvironmentsFolder . "\" . selectedSubpath . "\" . oldShortcutName
-      FileDelete, %fullShortcutPath%
-      }
-    Return True
+
+  ; delete old shortcut if changed name.    
+  if (oldShortcutName <> shortcutName) {
+    fullShortcutPath := AllEnvironmentsFolder . "\" . selectedSubpath . "\" . oldShortcutName
+    FileDelete, %fullShortcutPath%
     }
 
   }
@@ -1326,16 +1268,33 @@ getFileFilter() {
       filter := ""
     case "URL":
       filter := "*.htm; *.url; *.html"
-    case "Word":
-      filter := "*.doc*"
-    case "Excel":
-      filter := "*.xls*"
-    case "pdf":
-      filter := "*.pdf"
+    ; case "Word":
+    ;   filter := "*.doc*"
+    ; case "Excel":
+    ;   filter := "*.xls*"
+    ; case "pdf":
+    ;   filter := "*.pdf"
     default:
       filter := ""
   }
   Return filter
+  }
+  ;--------------------------------
+  ; get defined apps from json
+  ;--------------------------------
+getDefinedApps() {
+  output_string := "Select application"
+  AppsObject := ""
+  json_contents := ""    
+  json_file := A_ScriptDir . "\apps_declarations.json"
+  FileRead, json_contents, %json_file%
+  AppsObject := JSON.load(json_contents)
+
+  For key, value in AppsObject.Apps {
+    output_string .= "|" . key
+    }
+  
+  Return output_string
   }
   ;--------------------------------
   ; shortcut definition as a class
@@ -1349,3 +1308,4 @@ class Shortcut {
   }
 
 #include %A_ScriptDir%\GuiCenterButtons.ahk
+#Include %A_ScriptDir%\JSON\JSON.ahk

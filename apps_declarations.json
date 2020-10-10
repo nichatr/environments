@@ -1,0 +1,27 @@
+{
+  "Apps": {
+    "VSCode": {
+      "appPath": "C:\\Program Files\\Microsoft VS Code\\Code.exe",
+      "args": "--new-window",
+      "target_in_workingDir": false
+    },
+    "Powershell": {
+      "appPath": "%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": "",
+      "target_in_workingDir": true
+    },
+    "Notepad++": {
+      "appPath": "C:\\Program Files\\Notepad++\\notepad++.exe",
+      "args": "-nosession",
+      "target_in_workingDir": false
+    },
+    "URL": {
+      "isURL": true
+    },
+    "Link": {
+      "appPath": "",
+      "args": "",
+      "target_in_workingDir": false
+    }
+  }
+}
