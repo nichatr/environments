@@ -811,7 +811,11 @@ DeleteShortcut() {
   IfMsgBox, Yes
   {
     LV_GetText(shortcutName, selectedRow, 1)
-    FileDelete, %AllEnvironmentsFolder%\%selectedSubpath%\%shortcutName%
+    FileDelete, %AllEnvironmentsFolder%\%selectedSubpath%\%shortcutName%.lnk
+    if (ErrorLevel) {
+      ShowMsgbox(OK_MESSAGE, "Warning", "Could not delete the shortcut")
+      Return
+    }
     refreshShortcuts()
   }
   }
@@ -1099,21 +1103,21 @@ examineShortcut(newShortcut) {
 
   ; extract file from target's path.
   fullPath := newShortcut.target
-  SplitPath, fullPath, FileName, Dir, Extension, NameNoExt, Drive
+  
+  if (fullPath <> "") {
 
-  ; search all defined apps.
-  For key, value in AppsObject.Apps {
-    if (InStr(value.appPath, FileName) > 0) {
-      targetApp := key
-      if (value.target_in_workingDir)
-        newShortcut.args := newShortcut.path  ; for powershell the args are the path to the folder opened.
-      break
+    SplitPath, fullPath, FileName, Dir, Extension, NameNoExt, Drive
+
+    ; search all defined apps.
+    For key, value in AppsObject.Apps {
+      if (InStr(value.appPath, FileName) > 0) {
+        targetApp := key
+        if (value.target_in_workingDir)
+          newShortcut.args := newShortcut.path  ; for powershell the args are the path to the folder opened.
+        break
+      }
     }
-  }
-
-  ; when no special app found: check if shortcut's extension is .lnk
-  if (targetApp = "" and RegExMatch(newShortcut.name, "i).\.lnk$"))
-    targetApp := "Link"
+   }
 
   ; when no special app found: check if shortcut's extension is .url
   if (targetApp = "" and RegExMatch(newShortcut.name, "i).\.url$")) {
@@ -1122,6 +1126,10 @@ examineShortcut(newShortcut) {
     IniRead, OutputVar, %file%, InternetShortcut, URL
     newShortcut.target := OutputVar
   }
+
+  ; when no special app found: check if shortcut's extension is .lnk
+  if (targetApp = "" and RegExMatch(newShortcut.name, "i).\.lnk$"))
+    targetApp := "Link"
   
   newShortcut.app := targetApp
 
