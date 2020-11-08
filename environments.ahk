@@ -988,7 +988,7 @@ loadGui3(selectedRow) {
   GuiControl, 3:, myEnvName, %selectedEnvironment%  ; update the env.name
   oldShortcutName := ""
   LV_GetText(shortcutApp, selectedRow, 2)
-  newShortcutApp := ShortcutApp = "Pdf" ? (ShortcutApp . "||") : (ShortcutApp . "|")  ; Pdf is last item so add 2 |
+  newShortcutApp := ShortcutApp = "VSCode" ? (ShortcutApp . "||") : (ShortcutApp . "|")  ; VSCode is last item so add 2 |
   newList := "|" . StrReplace(Applications, shortcutApp, newShortcutApp)
   GuiControl, 3:, myApplicationDropdownList, %newList%  ; update the shortcut app
 
