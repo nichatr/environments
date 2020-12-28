@@ -1,7 +1,7 @@
 {
   "Apps": {
     "VSCode": {
-      "appPath": "%LOCALAPPDATA%\\programs\\Microsoft VS Code\\Code.exe",
+      "appPath": "C:\\Program Files\\Microsoft VS Code\\Code.exe",
       "args": "--new-window",
       "target_in_workingDir": false
     },

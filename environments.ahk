@@ -145,7 +145,7 @@ Help() {
   else 
     myTooltip := ""
 
-  ToolTip % myTooltip
+  ; ToolTip % myTooltip
   }
   ;---------------------------------------------------------------------
   ; setup the sub guis

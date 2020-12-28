@@ -1,5 +1,7 @@
 tests
 environments.ini
 environments
+environments-RYZEN
 #GuiCenterButtons.ahk
 test.md
+*.log
